@@ -1,0 +1,22 @@
+@baseUrl = http://localhost:5191
+
+### Get all employees
+GET {{baseUrl}}/employee
+
+### Get one employee
+GET {{baseUrl}}/employee/1
+
+### Create an employee (expect 201 Created + Location header)
+POST {{baseUrl}}/employee
+Content-Type: application/json
+
+{
+  "name": "Sara Ahmad",
+  "task": "Customer Support"
+}
+
+### Get the employee you just created (use the id from the Location header)
+GET {{baseUrl}}/employee/3
+
+### Get an employee that doesn't exist (should be 404 Not Found)
+GET {{baseUrl}}/employee/99
