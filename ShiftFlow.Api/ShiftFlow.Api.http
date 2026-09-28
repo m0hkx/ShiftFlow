@@ -1,22 +1,25 @@
 @baseUrl = http://localhost:5191
 
 ### Get all employees
-GET {{baseUrl}}/employee
+GET {{baseUrl}}/api/employees
 
 ### Get one employee
-GET {{baseUrl}}/employee/1
+GET {{baseUrl}}/api/employees/1
 
 ### Create an employee (expect 201 Created + Location header)
-POST {{baseUrl}}/employee
+POST {{baseUrl}}/api/employees
 Content-Type: application/json
 
 {
   "name": "Sara Ahmad",
-  "task": "Customer Support"
+  "email": "sara@acme.com",
+  "position": "Customer Support",
+  "team": "Team #1",
+  "active": true
 }
 
 ### Get the employee you just created (use the id from the Location header)
-GET {{baseUrl}}/employee/3
+GET {{baseUrl}}/api/employees/3
 
 ### Get an employee that doesn't exist (should be 404 Not Found)
-GET {{baseUrl}}/employee/99
+GET {{baseUrl}}/api/employees/99
