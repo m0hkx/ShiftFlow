@@ -23,3 +23,66 @@ GET {{baseUrl}}/api/employees/3
 
 ### Get an employee that doesn't exist (should be 404 Not Found)
 GET {{baseUrl}}/api/employees/99
+
+### Update an employee (expect 200 OK)
+PUT {{baseUrl}}/api/employees/1
+Content-Type: application/json
+
+{
+  "name": "Ali Mohammad",
+  "email": "ali.m@acme.com",
+  "position": "Senior Developer",
+  "team": "IT",
+  "active": true
+}
+
+### Check the update (email and position should be changed)
+GET {{baseUrl}}/api/employees/1
+
+### Update an employee that doesn't exist (expect 404 Not Found)
+PUT {{baseUrl}}/api/employees/99
+Content-Type: application/json
+
+{
+  "name": "Nobody",
+  "email": "nobody@acme.com",
+  "position": "Developer",
+  "team": "IT",
+  "active": true
+}
+
+### Update with invalid data (expect 400 with validation errors)
+PUT {{baseUrl}}/api/employees/1
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": "not-an-email",
+  "position": "",
+  "team": "IT",
+  "active": true
+}
+
+### Delete an employee (expect 204 No Content)
+DELETE {{baseUrl}}/api/employees/2
+
+### Check the delete (expect 404 Not Found)
+GET {{baseUrl}}/api/employees/2
+
+### Delete an employee that doesn't exist (expect 404 Not Found)
+DELETE {{baseUrl}}/api/employees/99
+
+### After a delete, create another employee - what id does it get? Is it unique?
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Omar Hassan",
+  "email": "omar@acme.com",
+  "position": "Technician",
+  "team": "Maintenance",
+  "active": true
+}
+
+### List everyone - look at the ids
+GET {{baseUrl}}/api/employees

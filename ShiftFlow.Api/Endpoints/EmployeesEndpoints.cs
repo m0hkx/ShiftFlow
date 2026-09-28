@@ -16,7 +16,7 @@ public static class EmployeesEndpoints
         new (
             2,
             "Mohammad Khalid",
-            "ali@acme.com",
+            "mohammad@acme.com",
             "Graphics Designer",
             "Designing",
             false
@@ -57,6 +57,42 @@ public static class EmployeesEndpoints
             Employees.Add(Employee);
 
             return Results.CreatedAtRoute("GetEmployee", new { id = Employee.Id }, Employee);
+        });
+
+        group.MapPut("/{id}", (int id, UpdateEmployeeDto upEmployee) =>
+        {
+            int index = Employees.FindIndex(employee => employee.Id == id);
+
+            if (index == -1)
+            {
+                return Results.NotFound();
+            }
+
+            Employees[index] = new EmployeeDto(
+                id,
+                upEmployee.Name,
+                upEmployee.Email,
+                upEmployee.Position,
+                upEmployee.Team,
+                upEmployee.Active
+            );
+
+            return Results.Ok();
+        });
+
+        group.MapDelete("/{id}", (int id) =>
+        {
+            int index = Employees.FindIndex(employee => employee.Id == id);
+
+            if (index == -1)
+            {
+                return Results.NotFound();
+            } else
+            {
+                Employees.RemoveAt(index);
+
+                return Results.Ok();
+            }
         });
     }
 }
