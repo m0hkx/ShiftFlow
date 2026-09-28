@@ -5,6 +5,6 @@ public record EmployeeDto(
     string Name,
     string Email,
     string Position,
-    string Team,
+    string? Team,
     bool Active
 );

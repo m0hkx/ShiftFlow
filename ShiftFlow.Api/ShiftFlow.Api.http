@@ -10,13 +10,28 @@ GET {{baseUrl}}/api/employees/1
 POST {{baseUrl}}/api/employees
 Content-Type: application/json
 
+# {
+#   "name": "Sara Ahmad",
+#   "email": "sara@acme.com",
+#   "position": "Customer Support",
+#   "team": "Team #1",
+#   "active": true
+# }
+# {
+#   "name": "Ali Mohammad",
+#   "email": "ali@acme.com",
+#   "position": "Developer",
+#   "team": "IT",
+#   "active": true
+# }
 {
-  "name": "Sara Ahmad",
-  "email": "sara@acme.com",
-  "position": "Customer Support",
-  "team": "Team #1",
-  "active": true
+  "name": "Mohammad Khalid",
+  "email": "mohammad@acme.com",
+  "position": "Graphics Designer",
+  "team": "Designing",
+  "active": false
 }
+
 
 ### Get the employee you just created (use the id from the Location header)
 GET {{baseUrl}}/api/employees/3
@@ -63,7 +78,7 @@ Content-Type: application/json
   "active": true
 }
 
-### Delete an employee (expect 204 No Content)
+### Delete an employee (expect 200 Ok)
 DELETE {{baseUrl}}/api/employees/2
 
 ### Check the delete (expect 404 Not Found)

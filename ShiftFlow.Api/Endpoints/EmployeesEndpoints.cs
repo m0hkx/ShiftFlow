@@ -1,37 +1,29 @@
+using Microsoft.EntityFrameworkCore;
 using ShiftFlow.Api.Dtos;
+using ShiftFlow.Api.Data;
+using ShiftFlow.Api.Entities;
 
 namespace ShiftFlow.Api.Endpoints;
 
 public static class EmployeesEndpoints
 {
-    private static readonly List<EmployeeDto> Employees = [
-        new (
-            1,
-            "Ali Mohammad",
-            "ali@acme.com",
-            "Developer",
-            "IT",
-            true
-        ),
-        new (
-            2,
-            "Mohammad Khalid",
-            "mohammad@acme.com",
-            "Graphics Designer",
-            "Designing",
-            false
-        ),
-    ];
 
     public static void MapEmployeesEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/employees");
 
-        group.MapGet("/", () => Employees);
-
-        group.MapGet("/{id}", (int id) =>
+        group.MapGet("/", async (ShiftFlowDbContext db) =>
         {
-            EmployeeDto? emp = Employees.Find(Employee => Employee.Id == id);
+            var employees = await db.Employees
+                .Select(e => new EmployeeDto(e.Id, e.Name, e.Email, e.Position, e.Team, e.Active))
+                .ToListAsync();
+
+            return Results.Ok(employees);
+        });
+
+        group.MapGet("/{id}", async (int id, ShiftFlowDbContext db) =>
+        {
+            var emp = await db.Employees.FindAsync(id);
 
             if (emp is null)
             {
@@ -39,60 +31,76 @@ public static class EmployeesEndpoints
             }
             else
             {
-                return Results.Ok(emp);
+                EmployeeDto employeeDto = new(
+                    emp.Id,
+                    emp.Name,
+                    emp.Email,
+                    emp.Position,
+                    emp.Team,
+                    emp.Active
+                );
+
+                return Results.Ok(employeeDto);
             }
         }).WithName("GetEmployee");
 
-        group.MapPost("/", (CreateEmployeeDto newEmployee) =>
+        group.MapPost("/", async (CreateEmployeeDto newEmployee, ShiftFlowDbContext db) =>
         {
-            EmployeeDto Employee = new(
-                Employees.Count + 1,
-                newEmployee.Name,
-                newEmployee.Email,
-                newEmployee.Position,
-                newEmployee.Team,
-                newEmployee.Active
+            Employee emp = new()
+            {
+                Name = newEmployee.Name,
+                Email = newEmployee.Email,
+                Position = newEmployee.Position,
+                Team = newEmployee.Team,
+                Active = newEmployee.Active
+            };
+
+            db.Employees.Add(emp);
+
+            await db.SaveChangesAsync();
+
+            EmployeeDto employeeDto = new(
+                emp.Id,
+                emp.Name,
+                emp.Email,
+                emp.Position,
+                emp.Team,
+                emp.Active
             );
 
-            Employees.Add(Employee);
-
-            return Results.CreatedAtRoute("GetEmployee", new { id = Employee.Id }, Employee);
+            return Results.CreatedAtRoute("GetEmployee", new { id = emp.Id }, employeeDto);
         });
 
-        group.MapPut("/{id}", (int id, UpdateEmployeeDto upEmployee) =>
+        group.MapPut("/{id}", async (int id, ShiftFlowDbContext db, UpdateEmployeeDto upEmp) =>
         {
-            int index = Employees.FindIndex(employee => employee.Id == id);
+            var employee = await db.Employees.FindAsync(id);
 
-            if (index == -1)
-            {
+            if (employee is null)
                 return Results.NotFound();
-            }
 
-            Employees[index] = new EmployeeDto(
-                id,
-                upEmployee.Name,
-                upEmployee.Email,
-                upEmployee.Position,
-                upEmployee.Team,
-                upEmployee.Active
-            );
+            employee.Name = upEmp.Name;
+            employee.Email = upEmp.Email;
+            employee.Position = upEmp.Position;
+            employee.Team = upEmp.Team;
+            employee.Active = upEmp.Active;
+
+            await db.SaveChangesAsync();
 
             return Results.Ok();
         });
 
-        group.MapDelete("/{id}", (int id) =>
+        group.MapDelete("/{id}", async (int id, ShiftFlowDbContext db) =>
         {
-            int index = Employees.FindIndex(employee => employee.Id == id);
+            var employee = await db.Employees.FindAsync(id);
 
-            if (index == -1)
-            {
+            if (employee is null)
                 return Results.NotFound();
-            } else
-            {
-                Employees.RemoveAt(index);
 
-                return Results.Ok();
-            }
+            db.Employees.Remove(employee);
+
+            await db.SaveChangesAsync();
+
+            return Results.Ok();
         });
     }
 }
