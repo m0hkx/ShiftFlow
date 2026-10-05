@@ -6,6 +6,6 @@ public record CreateEmployeeDto(
     [Required, StringLength(100)] string Name,
     [Required, EmailAddress] string Email,
     [Required] string Position,
-    string Team,
+    string? Team,
     bool Active
 );

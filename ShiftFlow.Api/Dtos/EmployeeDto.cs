@@ -1,7 +1,7 @@
 namespace ShiftFlow.Api.Dtos;
 
 public record EmployeeDto(
-    int Id,
+    Guid Id,
     string Name,
     string Email,
     string Position,

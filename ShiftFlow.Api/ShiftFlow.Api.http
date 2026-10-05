@@ -24,13 +24,13 @@ Content-Type: application/json
 #   "team": "IT",
 #   "active": true
 # }
-{
-  "name": "Mohammad Khalid",
-  "email": "mohammad@acme.com",
-  "position": "Graphics Designer",
-  "team": "Designing",
-  "active": false
-}
+# {
+#   "name": "Mohammad Khalid",
+#   "email": "mohammad@acme.com",
+#   "position": "Graphics Designer",
+#   "team": "Designing",
+#   "active": false
+# }
 
 
 ### Get the employee you just created (use the id from the Location header)

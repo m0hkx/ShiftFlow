@@ -21,7 +21,7 @@ public static class EmployeesEndpoints
             return Results.Ok(employees);
         });
 
-        group.MapGet("/{id}", async (int id, ShiftFlowDbContext db) =>
+        group.MapGet("/{id}", async (Guid id, ShiftFlowDbContext db) =>
         {
             var emp = await db.Employees.FindAsync(id);
 
@@ -71,7 +71,7 @@ public static class EmployeesEndpoints
             return Results.CreatedAtRoute("GetEmployee", new { id = emp.Id }, employeeDto);
         });
 
-        group.MapPut("/{id}", async (int id, ShiftFlowDbContext db, UpdateEmployeeDto upEmp) =>
+        group.MapPut("/{id}", async (Guid id, ShiftFlowDbContext db, UpdateEmployeeDto upEmp) =>
         {
             var employee = await db.Employees.FindAsync(id);
 
@@ -89,7 +89,7 @@ public static class EmployeesEndpoints
             return Results.Ok();
         });
 
-        group.MapDelete("/{id}", async (int id, ShiftFlowDbContext db) =>
+        group.MapDelete("/{id}", async (Guid id, ShiftFlowDbContext db) =>
         {
             var employee = await db.Employees.FindAsync(id);
 
