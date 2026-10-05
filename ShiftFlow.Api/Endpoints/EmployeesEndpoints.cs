@@ -10,7 +10,7 @@ public static class EmployeesEndpoints
 
     public static void MapEmployeesEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/employees");
+        var group = app.MapGroup("/api/employees").RequireAuthorization();
 
         group.MapGet("/", async (ShiftFlowDbContext db) =>
         {

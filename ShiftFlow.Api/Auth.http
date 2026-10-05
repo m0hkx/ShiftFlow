@@ -1,0 +1,75 @@
+@baseUrl = http://localhost:5191
+
+### 1. Register a new user (expect 201 Created, role = Employee)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "sara",
+  "email": "sara@acme.com",
+  "password": "Password123"
+}
+
+### 2. Register the same user again (expect 409 Conflict)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "sara",
+  "email": "sara@acme.com",
+  "password": "Password123"
+}
+
+### 3. Register with invalid data (expect 400: bad email, short password)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "bad",
+  "email": "not-an-email",
+  "password": "123"
+}
+
+### 4. Login with correct credentials (expect 200 + token)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@acme.com",
+  "password": "Password123"
+}
+
+### Saves the token from request 4 so the requests below can reuse it
+@token = {{login.response.body.token}}
+
+### 5. Login with wrong password (expect 401 Unauthorized)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@acme.com",
+  "password": "WrongPassword"
+}
+
+### 6. Login with an email that doesn't exist (expect 401, same as wrong password)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@acme.com",
+  "password": "Password123"
+}
+
+### 7. Call a protected endpoint WITHOUT a token
+# Expect 401 once you add .RequireAuthorization() to the employees group
+GET {{baseUrl}}/api/employees
+
+### 8. Call a protected endpoint WITH the token (expect 200)
+# Run request 4 first so {{token}} has a value
+GET {{baseUrl}}/api/employees
+Authorization: Bearer {{token}}
+
+### 9. Call with a fake token (expect 401)
+GET {{baseUrl}}/api/employees
+Authorization: Bearer this.is.not.a.real.token
