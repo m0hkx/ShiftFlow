@@ -1,47 +1,51 @@
 @baseUrl = http://localhost:5191
 
+### Login - run this first. The token lasts 15 minutes, so rerun it if you get 401.
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@acme.com",
+  "password": "Password123"
+}
+
+###
+@token = {{login.response.body.token}}
+
 ### Get all employees
 GET {{baseUrl}}/api/employees
-
-### Get one employee
-GET {{baseUrl}}/api/employees/1
+Authorization: Bearer {{token}}
 
 ### Create an employee (expect 201 Created + Location header)
+# @name createEmployee
 POST {{baseUrl}}/api/employees
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
-# {
-#   "name": "Sara Ahmad",
-#   "email": "sara@acme.com",
-#   "position": "Customer Support",
-#   "team": "Team #1",
-#   "active": true
-# }
-# {
-#   "name": "Ali Mohammad",
-#   "email": "ali@acme.com",
-#   "position": "Developer",
-#   "team": "IT",
-#   "active": true
-# }
-# {
-#   "name": "Mohammad Khalid",
-#   "email": "mohammad@acme.com",
-#   "position": "Graphics Designer",
-#   "team": "Designing",
-#   "active": false
-# }
+{
+  "name": "Ali Mohammad",
+  "email": "ali@acme.com",
+  "position": "Developer",
+  "team": "IT",
+  "active": true
+}
 
+###
+@employeeId = {{createEmployee.response.body.id}}
 
-### Get the employee you just created (use the id from the Location header)
-GET {{baseUrl}}/api/employees/3
+### Get the employee you just created (uses the id from the request above)
+GET {{baseUrl}}/api/employees/{{employeeId}}
+Authorization: Bearer {{token}}
 
-### Get an employee that doesn't exist (should be 404 Not Found)
-GET {{baseUrl}}/api/employees/99
+### Get an employee that doesn't exist (expect 404 Not Found)
+GET {{baseUrl}}/api/employees/00000000-0000-0000-0000-000000000099
+Authorization: Bearer {{token}}
 
 ### Update an employee (expect 200 OK)
-PUT {{baseUrl}}/api/employees/1
+PUT {{baseUrl}}/api/employees/{{employeeId}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "Ali Mohammad",
@@ -52,11 +56,13 @@ Content-Type: application/json
 }
 
 ### Check the update (email and position should be changed)
-GET {{baseUrl}}/api/employees/1
+GET {{baseUrl}}/api/employees/{{employeeId}}
+Authorization: Bearer {{token}}
 
 ### Update an employee that doesn't exist (expect 404 Not Found)
-PUT {{baseUrl}}/api/employees/99
+PUT {{baseUrl}}/api/employees/00000000-0000-0000-0000-000000000099
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "Nobody",
@@ -67,8 +73,9 @@ Content-Type: application/json
 }
 
 ### Update with invalid data (expect 400 with validation errors)
-PUT {{baseUrl}}/api/employees/1
+PUT {{baseUrl}}/api/employees/{{employeeId}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "",
@@ -78,18 +85,35 @@ Content-Type: application/json
   "active": true
 }
 
-### Delete an employee (expect 200 Ok)
-DELETE {{baseUrl}}/api/employees/2
-
-### Check the delete (expect 404 Not Found)
-GET {{baseUrl}}/api/employees/2
-
-### Delete an employee that doesn't exist (expect 404 Not Found)
-DELETE {{baseUrl}}/api/employees/99
-
-### After a delete, create another employee - what id does it get? Is it unique?
+### Create with a duplicate email (the unique index rejects it; expect an error, 500 for now)
 POST {{baseUrl}}/api/employees
 Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Someone Else",
+  "email": "ali.m@acme.com",
+  "position": "Developer",
+  "team": "IT",
+  "active": true
+}
+
+### Delete an employee (expect 200 Ok)
+DELETE {{baseUrl}}/api/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+
+### Check the delete (expect 404 Not Found)
+GET {{baseUrl}}/api/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+
+### Delete an employee that doesn't exist (expect 404 Not Found)
+DELETE {{baseUrl}}/api/employees/00000000-0000-0000-0000-000000000099
+Authorization: Bearer {{token}}
+
+### Create another employee - the id should be a new, unique GUID
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "Omar Hassan",
@@ -100,4 +124,8 @@ Content-Type: application/json
 }
 
 ### List everyone - look at the ids
+GET {{baseUrl}}/api/employees
+Authorization: Bearer {{token}}
+
+### Without a token (expect 401 Unauthorized)
 GET {{baseUrl}}/api/employees

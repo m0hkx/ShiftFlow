@@ -40,5 +40,6 @@ app.UseAuthorization();
 
 app.MapEmployeesEndpoints();
 app.MapAuthEndpoints();
+app.MapShiftEndpoints();
 
 app.Run();
