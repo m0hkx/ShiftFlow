@@ -1,0 +1,190 @@
+@baseUrl = http://localhost:5191
+
+### Login - run this first. The token lasts 15 minutes, so rerun it if you get 401.
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@acme.com",
+  "password": "Password123"
+}
+
+###
+@token = {{login.response.body.token}}
+
+### Create an employee to assign shifts to (a random email keeps reruns from clashing)
+# @name createEmployee
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Shift Tester",
+  "email": "{{$guid}}@acme.com",
+  "position": "Customer Support",
+  "team": "Team #1",
+  "active": true
+}
+
+###
+@employeeId = {{createEmployee.response.body.id}}
+
+### Create a shift (expect 201 Created + Location header + ShiftDto body)
+# @name createShift
+POST {{baseUrl}}/api/shifts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "{{employeeId}}",
+  "startTime": "2026-10-12T09:00:00",
+  "endTime": "2026-10-12T17:00:00",
+  "notes": "Morning desk"
+}
+
+###
+@shiftId = {{createShift.response.body.id}}
+
+### Get the shift you just created (expect 200, with employeeName)
+GET {{baseUrl}}/api/shifts/{{shiftId}}
+Authorization: Bearer {{token}}
+
+### Get a shift that doesn't exist (expect 404 Not Found)
+GET {{baseUrl}}/api/shifts/00000000-0000-0000-0000-000000000099
+Authorization: Bearer {{token}}
+
+### Create a shift that overlaps the first one (expect 409 Conflict)
+POST {{baseUrl}}/api/shifts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "{{employeeId}}",
+  "startTime": "2026-10-12T16:00:00",
+  "endTime": "2026-10-12T20:00:00"
+}
+
+### Create a shift that starts exactly when the first one ends (expect 201, touching is not overlapping)
+# @name createSecondShift
+POST {{baseUrl}}/api/shifts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "{{employeeId}}",
+  "startTime": "2026-10-12T17:00:00",
+  "endTime": "2026-10-12T21:00:00",
+  "notes": "Evening desk"
+}
+
+###
+@secondShiftId = {{createSecondShift.response.body.id}}
+
+### End before start (expect 400)
+POST {{baseUrl}}/api/shifts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "{{employeeId}}",
+  "startTime": "2026-10-13T17:00:00",
+  "endTime": "2026-10-13T09:00:00"
+}
+
+### Missing fields (expect 400)
+POST {{baseUrl}}/api/shifts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "notes": "Nothing else sent"
+}
+
+### Employee that doesn't exist (expect 400 Employee not found)
+POST {{baseUrl}}/api/shifts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "00000000-0000-0000-0000-000000000099",
+  "startTime": "2026-10-14T09:00:00",
+  "endTime": "2026-10-14T17:00:00"
+}
+
+### List all shifts, ordered by start time (expect 200)
+GET {{baseUrl}}/api/shifts
+Authorization: Bearer {{token}}
+
+### List one employee's shifts that start in a date range (expect both shifts)
+GET {{baseUrl}}/api/shifts?employeeId={{employeeId}}&from=2026-10-12T00:00:00&to=2026-10-13T00:00:00
+Authorization: Bearer {{token}}
+
+### Same employee, a range with no shifts (expect an empty list)
+GET {{baseUrl}}/api/shifts?employeeId={{employeeId}}&from=2026-11-01T00:00:00&to=2026-11-08T00:00:00
+Authorization: Bearer {{token}}
+
+### Update a shift (expect 200)
+PUT {{baseUrl}}/api/shifts/{{shiftId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "{{employeeId}}",
+  "startTime": "2026-10-12T08:00:00",
+  "endTime": "2026-10-12T16:00:00",
+  "notes": "Moved one hour earlier"
+}
+
+### Check the update (times and notes should be changed)
+GET {{baseUrl}}/api/shifts/{{shiftId}}
+Authorization: Bearer {{token}}
+
+### Update the first shift to overlap the second one (expect 409)
+PUT {{baseUrl}}/api/shifts/{{shiftId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "{{employeeId}}",
+  "startTime": "2026-10-12T08:00:00",
+  "endTime": "2026-10-12T18:00:00"
+}
+
+### Update a shift that doesn't exist (expect 404 Not Found)
+PUT {{baseUrl}}/api/shifts/00000000-0000-0000-0000-000000000099
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "employeeId": "{{employeeId}}",
+  "startTime": "2026-10-15T09:00:00",
+  "endTime": "2026-10-15T17:00:00"
+}
+
+### Delete the employee while they still have shifts (the foreign key blocks it; expect an error, 500 for now)
+DELETE {{baseUrl}}/api/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+
+### Delete a shift (expect 200 Ok)
+DELETE {{baseUrl}}/api/shifts/{{shiftId}}
+Authorization: Bearer {{token}}
+
+### Check the delete (expect 404 Not Found)
+GET {{baseUrl}}/api/shifts/{{shiftId}}
+Authorization: Bearer {{token}}
+
+### Delete a shift that doesn't exist (expect 404 Not Found)
+DELETE {{baseUrl}}/api/shifts/00000000-0000-0000-0000-000000000099
+Authorization: Bearer {{token}}
+
+### Clean up: delete the second shift, then the employee (expect 200 each)
+DELETE {{baseUrl}}/api/shifts/{{secondShiftId}}
+Authorization: Bearer {{token}}
+
+###
+DELETE {{baseUrl}}/api/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+
+### Without a token (expect 401 Unauthorized)
+GET {{baseUrl}}/api/shifts

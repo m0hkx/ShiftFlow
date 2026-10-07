@@ -8,5 +8,4 @@ public class Shift
     public required DateTime StartTime { get; set; }
     public required DateTime EndTime { get; set; }
     public string? Notes { get; set; }
-
 }

@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace ShiftFlow.Api.Dtos;
 
 public record ShiftDto(
@@ -11,13 +9,13 @@ public record ShiftDto(
     string? Notes);
 
 public record CreateShiftDto(
-    [Required] Guid? EmployeeId,
-    [Required] DateTime? StartTime,
-    [Required] DateTime? EndTime,
+    Guid EmployeeId,
+    DateTime StartTime,
+    DateTime EndTime,
     string? Notes);
 
 public record UpdateShiftDto(
-    [Required] Guid? EmployeeId,
-    [Required] DateTime? StartTime,
-    [Required] DateTime? EndTime,
+    Guid EmployeeId,
+    DateTime StartTime,
+    DateTime EndTime,
     string? Notes);

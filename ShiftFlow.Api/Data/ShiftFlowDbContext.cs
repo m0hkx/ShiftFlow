@@ -7,7 +7,7 @@ public class ShiftFlowDbContext(DbContextOptions<ShiftFlowDbContext> options): D
 {
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<User> Users => Set<User>();
-    public DbSet<Shift> Shift => Set<Shift>();
+    public DbSet<Shift> Shifts => Set<Shift>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

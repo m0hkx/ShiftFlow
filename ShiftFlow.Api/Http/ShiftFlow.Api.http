@@ -24,8 +24,8 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "Ali Mohammad",
-  "email": "ali@acme.com",
+  "name": "Laith Ghanem",
+  "email": "laith@acme.com",
   "position": "Developer",
   "team": "IT",
   "active": true
