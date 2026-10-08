@@ -11,4 +11,6 @@ public record LoginDto(
     [Required] string Email,
     [Required] string Password);
 
-public record AuthResponseDto(string Token, string Username, string Role);
+public record AuthResponseDto(string Token, string RefreshToken, string Username, string Role);
+
+public record RefreshTokenDto(string RefreshToken);
