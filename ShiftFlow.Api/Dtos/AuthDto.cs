@@ -13,4 +13,4 @@ public record LoginDto(
 
 public record AuthResponseDto(string Token, string RefreshToken, string Username, string Role);
 
-public record RefreshTokenDto(string RefreshToken);
+public record RefreshTokenDto([Required] string RefreshToken);

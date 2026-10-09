@@ -68,9 +68,9 @@ public static class AuthEndpoints
             return Results.Ok(new AuthResponseDto(token, refreshToken, user.Username, user.Role));
         });
 
-        group.MapPost("/refresh", async (RefreshTokenDto dto, ShiftFlowDbContext db, TokenService tokenService) =>
+        group.MapPost("/refresh", async (RefreshTokenDto refreshTokenDto, ShiftFlowDbContext db, TokenService tokenService) =>
         {
-            var hash = tokenService.HashRefreshToken(dto.RefreshToken);
+            var hash = tokenService.HashRefreshToken(refreshTokenDto.RefreshToken);
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.RefreshTokenHash == hash);
 
@@ -93,6 +93,24 @@ public static class AuthEndpoints
                 newRefreshToken,
                 user.Username,
                 user.Role));
+        });
+
+        group.MapPost("/logout", async (ShiftFlowDbContext db, RefreshTokenDto refreshTokenDto, TokenService tokenService) =>
+        {
+            var hash = tokenService.HashRefreshToken(refreshTokenDto.RefreshToken);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.RefreshTokenHash == hash);
+
+            if (user is not null)
+            {
+                user.RefreshTokenHash = null;
+                user.RefreshTokenExpiresAt = null;
+
+                await db.SaveChangesAsync();
+            }
+
+            await db.SaveChangesAsync();
+
+            return Results.Ok();
         });
     }
 }
