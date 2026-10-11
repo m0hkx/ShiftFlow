@@ -91,7 +91,7 @@ public static class InvitationEndpoints
 
         // The invited person creates their account. The email and role come from
         // the invitation, so they can't be changed here.
-        group.MapPost("/accept", async (AcceptInvitationDto dto, ShiftFlowDbContext db, TokenService tokenService) =>
+        group.MapPost("/accept", async (AcceptInvitationDto dto, ShiftFlowDbContext db, TokenService tokenService, HttpContext ctx) =>
         {
             var hash = tokenService.HashRefreshToken(dto.Token);
 
@@ -122,10 +122,11 @@ public static class InvitationEndpoints
 
             invitation.AcceptedAt = DateTime.UtcNow;
 
+            AuthEndpoints.SetRefreshCookie(ctx, refreshToken);
             db.Users.Add(newUser);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/members/{newUser.Id}", new AuthResponseDto(accessToken, refreshToken, newUser.Username, newUser.Role));
+            return Results.Created($"/api/members/{newUser.Id}", new AuthResponseDto(accessToken, newUser.Username, newUser.Role));
         }).AllowAnonymous();
     }
 }

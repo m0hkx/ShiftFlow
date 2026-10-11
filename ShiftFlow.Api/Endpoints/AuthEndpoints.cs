@@ -10,13 +10,23 @@ namespace ShiftFlow.Api.Endpoints;
 
 public static class AuthEndpoints
 {
+    internal static void SetRefreshCookie(HttpContext ctx, string refreshToken) =>
+        ctx.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = ctx.Request.IsHttps,
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/auth",
+            Expires = DateTimeOffset.UtcNow.AddDays(30)
+        });
+
     public static void MapAuthEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/auth");
 
         // Creates a new organization with the registering user as its Manager.
         // Other people join an organization through an invitation instead.
-        group.MapPost("/register", async (RegisterDto registerDto, ShiftFlowDbContext db, TokenService tokenService) =>
+        group.MapPost("/register", async (RegisterDto registerDto, ShiftFlowDbContext db, TokenService tokenService, HttpContext ctx) =>
         {
             var exists = await db.Users.AnyAsync(u =>
                 u.Email == registerDto.Email || u.Username == registerDto.Username);
@@ -43,13 +53,14 @@ public static class AuthEndpoints
 
             var (accessToken, refreshToken) = tokenService.IssueTokens(newUser);
 
+            SetRefreshCookie(ctx, refreshToken);
             db.Users.Add(newUser);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/members/{newUser.Id}", new AuthResponseDto(accessToken, refreshToken, newUser.Username, newUser.Role));
+            return Results.Created($"/api/members/{newUser.Id}", new AuthResponseDto(accessToken, newUser.Username, newUser.Role));
         });
 
-        group.MapPost("/login", async (LoginDto loginDto, ShiftFlowDbContext db, TokenService tokenService) =>
+        group.MapPost("/login", async (LoginDto loginDto, ShiftFlowDbContext db, TokenService tokenService, HttpContext ctx) =>
         {
             var hasher = new PasswordHasher<User>();
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
@@ -62,14 +73,20 @@ public static class AuthEndpoints
 
             var (token, refreshToken) = tokenService.IssueTokens(user);
 
+            SetRefreshCookie(ctx, refreshToken);
             await db.SaveChangesAsync();
 
-            return Results.Ok(new AuthResponseDto(token, refreshToken, user.Username, user.Role));
+            return Results.Ok(new AuthResponseDto(token, user.Username, user.Role));
         });
 
-        group.MapPost("/refresh", async (RefreshTokenDto refreshTokenDto, ShiftFlowDbContext db, TokenService tokenService) =>
+        group.MapPost("/refresh", async (HttpContext ctx, ShiftFlowDbContext db, TokenService tokenService) =>
         {
-            var hash = tokenService.HashRefreshToken(refreshTokenDto.RefreshToken);
+            var refreshToken = ctx.Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return Results.Unauthorized();
+
+            var hash = tokenService.HashRefreshToken(refreshToken);
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.RefreshTokenHash == hash);
 
@@ -81,19 +98,26 @@ public static class AuthEndpoints
 
             var (accessToken, newRefreshToken) = tokenService.IssueTokens(user);
 
+            SetRefreshCookie(ctx, newRefreshToken);
             await db.SaveChangesAsync();
 
             return Results.Ok(new AuthResponseDto(
                 accessToken,
-                newRefreshToken,
                 user.Username,
                 user.Role));
         });
 
-        group.MapPost("/logout", async (ShiftFlowDbContext db, RefreshTokenDto refreshTokenDto, TokenService tokenService) =>
+        group.MapPost("/logout", async (HttpContext ctx, ShiftFlowDbContext db, TokenService tokenService) =>
         {
-            var hash = tokenService.HashRefreshToken(refreshTokenDto.RefreshToken);
+            var refreshToken = ctx.Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return Results.Ok();
+
+            var hash = tokenService.HashRefreshToken(refreshToken);
             var user = await db.Users.FirstOrDefaultAsync(u => u.RefreshTokenHash == hash);
+
+            ctx.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth" });
 
             if (user is not null)
             {

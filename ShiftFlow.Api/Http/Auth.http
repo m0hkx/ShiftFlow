@@ -35,7 +35,7 @@ Content-Type: application/json
   "password": "123"
 }
 
-### 4. Login with correct credentials (expect 200 + token + refreshToken)
+### 4. Login with correct credentials (expect 200 + token, and a refreshToken cookie)
 # @name login
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -45,9 +45,9 @@ Content-Type: application/json
   "password": "Password123"
 }
 
-### Saves the tokens from request 4 so the requests below can reuse them
+### Saves the access token from request 4 so the requests below can reuse it
+# The refresh token is an HttpOnly cookie, which the REST Client stores and resends on its own
 @token = {{login.response.body.token}}
-@refreshToken = {{login.response.body.refreshToken}}
 
 ### 5. Login with wrong password (expect 401 Unauthorized)
 POST {{baseUrl}}/api/auth/login
@@ -79,60 +79,25 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/api/employees
 Authorization: Bearer this.is.not.a.real.token
 
-### 10. Refresh (expect 200 + a new token and a new refreshToken)
+### 10. Refresh (expect 200 + a new token, the cookie is rotated)
+# Sends the refreshToken cookie saved by request 4. No body needed
 # @name refresh
 POST {{baseUrl}}/api/auth/refresh
-Content-Type: application/json
 
-{
-  "refreshToken": "{{refreshToken}}"
-}
-
-###
-@newRefreshToken = {{refresh.response.body.refreshToken}}
-
-### 11. Refresh again with the OLD refresh token (expect 401, it was rotated in request 10)
+### 11. Refresh with a made-up cookie (expect 401)
 POST {{baseUrl}}/api/auth/refresh
-Content-Type: application/json
+Cookie: refreshToken=not-a-real-refresh-token
 
-{
-  "refreshToken": "{{refreshToken}}"
-}
-
-### 12. Refresh with a made-up token (expect 401)
+### 12. Refresh without any cookie (expect 401)
+# An explicit empty Cookie header stops the saved cookie from being sent
 POST {{baseUrl}}/api/auth/refresh
-Content-Type: application/json
+Cookie:
 
-{
-  "refreshToken": "not-a-real-refresh-token"
-}
-
-### 13. Refresh without a body field (expect 400)
-POST {{baseUrl}}/api/auth/refresh
-Content-Type: application/json
-
-{}
-
-### 14. Logout with the current refresh token (expect 200)
+### 13. Logout (expect 200, revokes the token and clears the cookie)
 POST {{baseUrl}}/api/auth/logout
-Content-Type: application/json
 
-{
-  "refreshToken": "{{newRefreshToken}}"
-}
-
-### 15. Refresh with the logged-out token (expect 401)
+### 14. Refresh after logout (expect 401, the cookie was cleared)
 POST {{baseUrl}}/api/auth/refresh
-Content-Type: application/json
 
-{
-  "refreshToken": "{{newRefreshToken}}"
-}
-
-### 16. Logout again with the same token (expect 200, logout is safe to repeat)
+### 15. Logout again (expect 200, logout is safe to repeat)
 POST {{baseUrl}}/api/auth/logout
-Content-Type: application/json
-
-{
-  "refreshToken": "{{newRefreshToken}}"
-}
