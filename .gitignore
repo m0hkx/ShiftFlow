@@ -483,3 +483,8 @@ $RECYCLE.BIN/
 
 # Others
 Context/
+
+# Angular
+ShiftFlow.Web/dist/
+ShiftFlow.Web/.angular/
+ShiftFlow.Web/out-tsc/
