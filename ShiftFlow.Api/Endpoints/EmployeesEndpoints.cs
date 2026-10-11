@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShiftFlow.Api.Dtos;
 using ShiftFlow.Api.Data;
 using ShiftFlow.Api.Entities;
+using ShiftFlow.Api.Services;
 
 namespace ShiftFlow.Api.Endpoints;
 
@@ -44,10 +45,11 @@ public static class EmployeesEndpoints
             }
         }).WithName("GetEmployee");
 
-        group.MapPost("/", async (CreateEmployeeDto newEmployee, ShiftFlowDbContext db) =>
+        group.MapPost("/", async (CreateEmployeeDto newEmployee, ShiftFlowDbContext db, CurrentUser currentUser) =>
         {
             Employee emp = new()
             {
+                OrgId = currentUser.OrgId,
                 Name = newEmployee.Name,
                 Email = newEmployee.Email,
                 Position = newEmployee.Position,
@@ -69,7 +71,7 @@ public static class EmployeesEndpoints
             );
 
             return Results.CreatedAtRoute("GetEmployee", new { id = emp.Id }, employeeDto);
-        });
+        }).RequireAuthorization(Policies.Manager);
 
         group.MapPut("/{id}", async (Guid id, ShiftFlowDbContext db, UpdateEmployeeDto upEmp) =>
         {
@@ -87,7 +89,7 @@ public static class EmployeesEndpoints
             await db.SaveChangesAsync();
 
             return Results.Ok();
-        });
+        }).RequireAuthorization(Policies.Manager);
 
         group.MapDelete("/{id}", async (Guid id, ShiftFlowDbContext db) =>
         {
@@ -101,6 +103,6 @@ public static class EmployeesEndpoints
             await db.SaveChangesAsync();
 
             return Results.Ok();
-        });
+        }).RequireAuthorization(Policies.Manager);
     }
 }

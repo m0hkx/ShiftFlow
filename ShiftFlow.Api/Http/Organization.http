@@ -1,0 +1,217 @@
+@baseUrl = http://localhost:5191
+
+# Run these from top to bottom. Each run creates two new organizations,
+# so the random emails and usernames never clash with earlier runs.
+
+### 1. Register organization A, you become its Manager (expect 201)
+# @name registerA
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "organizationName": "Org A",
+  "username": "{{$guid}}",
+  "email": "{{$guid}}@org-a.com",
+  "password": "Password123"
+}
+
+###
+@managerToken = {{registerA.response.body.token}}
+
+### 2. Invite an Employee (expect 201, the response contains the invite token)
+# @name invite
+POST {{baseUrl}}/api/invitations
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{
+  "email": "{{$guid}}@org-a.com",
+  "role": "Employee"
+}
+
+###
+@inviteToken = {{invite.response.body.token}}
+@invitationId = {{invite.response.body.id}}
+
+### 3. Invite with a role that doesn't exist (expect 400)
+POST {{baseUrl}}/api/invitations
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{
+  "email": "{{$guid}}@org-a.com",
+  "role": "Boss"
+}
+
+### 4. Invite an email that already has an account (expect 409)
+POST {{baseUrl}}/api/invitations
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{
+  "email": "sara@acme.com",
+  "role": "Employee"
+}
+
+### 5. List pending invitations (expect 200, the invitation from request 2 is listed, without its token)
+GET {{baseUrl}}/api/invitations
+Authorization: Bearer {{managerToken}}
+
+### 6. Accept the invitation, no login needed (expect 201 + tokens, role = Employee)
+# @name accept
+POST {{baseUrl}}/api/invitations/accept
+Content-Type: application/json
+
+{
+  "token": "{{inviteToken}}",
+  "username": "{{$guid}}",
+  "password": "Password123"
+}
+
+###
+@employeeToken = {{accept.response.body.token}}
+
+### 7. Accept the same invitation again (expect 400, it was already used)
+POST {{baseUrl}}/api/invitations/accept
+Content-Type: application/json
+
+{
+  "token": "{{inviteToken}}",
+  "username": "{{$guid}}",
+  "password": "Password123"
+}
+
+### 8. Accept with a made-up token (expect 400)
+POST {{baseUrl}}/api/invitations/accept
+Content-Type: application/json
+
+{
+  "token": "not-a-real-invite",
+  "username": "{{$guid}}",
+  "password": "Password123"
+}
+
+### 9. List members (expect 200, the Manager and the new Employee)
+# @name members
+GET {{baseUrl}}/api/members
+Authorization: Bearer {{managerToken}}
+
+### 10. An Employee can read (expect 200)
+GET {{baseUrl}}/api/employees
+Authorization: Bearer {{employeeToken}}
+
+### 11. An Employee can't create employees (expect 403 Forbidden)
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+Authorization: Bearer {{employeeToken}}
+
+{
+  "name": "Not Allowed",
+  "email": "not-allowed@org-a.com",
+  "position": "Developer",
+  "team": "IT",
+  "active": true
+}
+
+### 12. An Employee can't invite people (expect 403)
+POST {{baseUrl}}/api/invitations
+Content-Type: application/json
+Authorization: Bearer {{employeeToken}}
+
+{
+  "email": "{{$guid}}@org-a.com",
+  "role": "Manager"
+}
+
+### 13. The Manager creates an employee record (expect 201)
+# @name createEmployeeA
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{
+  "name": "Org A Worker",
+  "email": "worker@org-a.com",
+  "position": "Developer",
+  "team": "IT",
+  "active": true
+}
+
+###
+@employeeAId = {{createEmployeeA.response.body.id}}
+
+### 14. Demote yourself, the only Manager (expect 409, an organization must keep one Manager)
+# Replace MANAGER_USER_ID with the Manager's id from request 9
+PUT {{baseUrl}}/api/members/MANAGER_USER_ID/role
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{
+  "role": "Employee"
+}
+
+### 15. Promote the Employee to Manager (expect 200)
+# Replace EMPLOYEE_USER_ID with the Employee's id from request 9.
+# Their current token keeps the old role until it's refreshed.
+PUT {{baseUrl}}/api/members/EMPLOYEE_USER_ID/role
+Content-Type: application/json
+Authorization: Bearer {{managerToken}}
+
+{
+  "role": "Manager"
+}
+
+### 16. Cancel an invitation that was already accepted (expect 404, only pending ones can be cancelled)
+DELETE {{baseUrl}}/api/invitations/{{invitationId}}
+Authorization: Bearer {{managerToken}}
+
+### 17. Register organization B (expect 201)
+# @name registerB
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "organizationName": "Org B",
+  "username": "{{$guid}}",
+  "email": "{{$guid}}@org-b.com",
+  "password": "Password123"
+}
+
+###
+@managerBToken = {{registerB.response.body.token}}
+
+### 18. Org B sees none of org A's employees (expect 200 and an empty list)
+GET {{baseUrl}}/api/employees
+Authorization: Bearer {{managerBToken}}
+
+### 19. Org B can't read org A's employee by id (expect 404)
+GET {{baseUrl}}/api/employees/{{employeeAId}}
+Authorization: Bearer {{managerBToken}}
+
+### 20. Org B can't schedule org A's employee (expect 400 Employee not found)
+POST {{baseUrl}}/api/shifts
+Content-Type: application/json
+Authorization: Bearer {{managerBToken}}
+
+{
+  "employeeId": "{{employeeAId}}",
+  "startTime": "2026-10-12T09:00:00",
+  "endTime": "2026-10-12T17:00:00"
+}
+
+### 21. Org B can use the same employee email as org A (expect 201, emails are unique per organization)
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+Authorization: Bearer {{managerBToken}}
+
+{
+  "name": "Org B Worker",
+  "email": "worker@org-a.com",
+  "position": "Designer",
+  "team": "Design",
+  "active": true
+}
+
+### 22. Org B's member list only has its own Manager (expect 200, one member)
+GET {{baseUrl}}/api/members
+Authorization: Bearer {{managerBToken}}

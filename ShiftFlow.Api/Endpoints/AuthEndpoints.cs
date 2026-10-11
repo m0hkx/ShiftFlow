@@ -14,6 +14,8 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/api/auth");
 
+        // Creates a new organization with the registering user as its Manager.
+        // Other people join an organization through an invitation instead.
         group.MapPost("/register", async (RegisterDto registerDto, ShiftFlowDbContext db, TokenService tokenService) =>
         {
             var exists = await db.Users.AnyAsync(u =>
@@ -21,29 +23,30 @@ public static class AuthEndpoints
 
             if (exists) return Results.Conflict("Email or username already in use.");
 
+            Organization organization = new() { Name = registerDto.OrganizationName };
+
+            // Adding it generates organization.Id, which the user needs below
+            db.Organizations.Add(organization);
+
             var hasher = new PasswordHasher<User>();
 
             var newUser = new User
             {
+                OrgId = organization.Id,
                 Username = registerDto.Username,
                 Email = registerDto.Email,
                 PasswordHash = "",
-                Role = "Employee"
+                Role = Roles.Manager
             };
 
             newUser.PasswordHash = hasher.HashPassword(newUser, registerDto.Password);
 
-            var accessToken = tokenService.CreateToken(newUser);
-            var refreshToken = tokenService.CreateRefreshToken();
-
-            newUser.RefreshTokenHash = tokenService.HashRefreshToken(refreshToken);
-            newUser.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(30);
-
+            var (accessToken, refreshToken) = tokenService.IssueTokens(newUser);
 
             db.Users.Add(newUser);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/users/{newUser.Id}", new AuthResponseDto(accessToken, refreshToken, newUser.Username, newUser.Role));
+            return Results.Created($"/api/members/{newUser.Id}", new AuthResponseDto(accessToken, refreshToken, newUser.Username, newUser.Role));
         });
 
         group.MapPost("/login", async (LoginDto loginDto, ShiftFlowDbContext db, TokenService tokenService) =>
@@ -57,11 +60,7 @@ public static class AuthEndpoints
 
             if (result == PasswordVerificationResult.Failed) return Results.Unauthorized();
 
-            var token = tokenService.CreateToken(user);
-            var refreshToken = tokenService.CreateRefreshToken();
-
-            user.RefreshTokenHash = tokenService.HashRefreshToken(refreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(30);
+            var (token, refreshToken) = tokenService.IssueTokens(user);
 
             await db.SaveChangesAsync();
 
@@ -80,11 +79,7 @@ public static class AuthEndpoints
             if (user.RefreshTokenExpiresAt <= DateTime.UtcNow)
                 return Results.Unauthorized();
 
-            var accessToken = tokenService.CreateToken(user);
-            var newRefreshToken = tokenService.CreateRefreshToken();
-
-            user.RefreshTokenHash = tokenService.HashRefreshToken(newRefreshToken);
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(30);
+            var (accessToken, newRefreshToken) = tokenService.IssueTokens(user);
 
             await db.SaveChangesAsync();
 
@@ -107,8 +102,6 @@ public static class AuthEndpoints
 
                 await db.SaveChangesAsync();
             }
-
-            await db.SaveChangesAsync();
 
             return Results.Ok();
         });

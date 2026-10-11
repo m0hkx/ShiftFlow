@@ -16,7 +16,8 @@ public class TokenService(IConfiguration config)
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role)
+            new Claim(ClaimTypes.Role, user.Role),
+            new Claim(CurrentUser.OrgIdClaim, user.OrgId.ToString())
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
@@ -30,6 +31,19 @@ public class TokenService(IConfiguration config)
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    // Creates a new access token and refresh token, and stores the refresh token's
+    // hash on the user. The caller still has to call SaveChangesAsync.
+    public (string AccessToken, string RefreshToken) IssueTokens(User user)
+    {
+        var accessToken = CreateToken(user);
+        var refreshToken = CreateRefreshToken();
+
+        user.RefreshTokenHash = HashRefreshToken(refreshToken);
+        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(30);
+
+        return (accessToken, refreshToken);
     }
 
     public string CreateRefreshToken()

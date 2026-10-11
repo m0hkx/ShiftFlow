@@ -3,6 +3,7 @@ namespace ShiftFlow.Api.Entities;
 public class Employee
 {
     public Guid Id { get; set; }
+    public required Guid OrgId { get; set; }
     public required string Name { get; set; }
     public required string Email { get; set; }
     public required string Position { get; set; }

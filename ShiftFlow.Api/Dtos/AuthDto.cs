@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace ShiftFlow.Api.Dtos;
 
 public record RegisterDto(
+    [Required, StringLength(100)] string OrganizationName,
     [Required, StringLength(50)] string Username,
     [Required, EmailAddress] string Email,
     [Required, MinLength(8)] string Password);

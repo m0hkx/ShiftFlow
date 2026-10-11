@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ShiftFlow.Api.Data;
 using ShiftFlow.Api.Endpoints;
+using ShiftFlow.Api.Entities;
 using ShiftFlow.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,7 +31,11 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(Policies.Manager, policy => policy.RequireRole(Roles.Manager));
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<TokenService>();
 
 var app = builder.Build();
@@ -41,5 +46,7 @@ app.UseAuthorization();
 app.MapEmployeesEndpoints();
 app.MapAuthEndpoints();
 app.MapShiftEndpoints();
+app.MapInvitationEndpoints();
+app.MapMemberEndpoints();
 
 app.Run();

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShiftFlow.Api.Data;
 using ShiftFlow.Api.Dtos;
 using ShiftFlow.Api.Entities;
+using ShiftFlow.Api.Services;
 
 namespace ShiftFlow.Api.Endpoints;
 
@@ -48,7 +49,7 @@ public static class ShiftEndpoints
         }).WithName("GetShift");
 
         // Create Shift
-        group.MapPost("/", async (CreateShiftDto createShiftDto, ShiftFlowDbContext db) =>
+        group.MapPost("/", async (CreateShiftDto createShiftDto, ShiftFlowDbContext db, CurrentUser currentUser) =>
         {
             var error = ValidateShift(createShiftDto.EmployeeId, createShiftDto.StartTime, createShiftDto.EndTime);
 
@@ -65,6 +66,7 @@ public static class ShiftEndpoints
 
             Shift shiftEntity = new()
             {
+                OrgId = currentUser.OrgId,
                 EmployeeId = createShiftDto.EmployeeId,
                 StartTime = createShiftDto.StartTime,
                 EndTime = createShiftDto.EndTime,
@@ -84,7 +86,7 @@ public static class ShiftEndpoints
                 shiftEntity.Notes);
 
             return Results.CreatedAtRoute("GetShift", new { id = shiftEntity.Id }, shiftDto);
-        });
+        }).RequireAuthorization(Policies.Manager);
 
         // Edit Shift
         group.MapPut("/{id}", async (Guid id, UpdateShiftDto updateShiftDto, ShiftFlowDbContext db) =>
@@ -113,7 +115,7 @@ public static class ShiftEndpoints
             await db.SaveChangesAsync();
 
             return Results.Ok();
-        });
+        }).RequireAuthorization(Policies.Manager);
 
         // Delete Shift
         group.MapDelete("/{id}", async (Guid id, ShiftFlowDbContext db) =>
@@ -128,7 +130,7 @@ public static class ShiftEndpoints
             await db.SaveChangesAsync();
 
             return Results.Ok();
-        });
+        }).RequireAuthorization(Policies.Manager);
     }
 
     // Returns an error message, or null when the shift data is valid
