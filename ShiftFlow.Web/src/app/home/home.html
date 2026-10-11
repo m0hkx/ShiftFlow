@@ -1,0 +1,13 @@
+<header>
+  <span>Signed in as {{ auth.user()?.username }} ({{ auth.user()?.role }})</span>
+  <button type="button" (click)="logout()">Log out</button>
+</header>
+
+<h1>Employees</h1>
+<ul>
+  @for (employee of employees(); track employee.id) {
+    <li>{{ employee.name }} - {{ employee.position }}</li>
+  } @empty {
+    <li>No employees yet.</li>
+  }
+</ul>

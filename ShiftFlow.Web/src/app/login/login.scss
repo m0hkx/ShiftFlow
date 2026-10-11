@@ -1,0 +1,26 @@
+.login {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 22rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  input,
+  button {
+    padding: 0.5rem;
+    font: inherit;
+  }
+
+  .field-error {
+    margin: 0;
+    color: #b00020;
+    font-size: 0.875rem;
+  }
+}
