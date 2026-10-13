@@ -10,7 +10,7 @@ import { Auth } from '../auth/auth';
   templateUrl: './layout.html',
 })
 export class Layout {
-  private auth = inject(Auth);
+  protected readonly auth = inject(Auth);
   private router = inject(Router);
 
   protected logout() {

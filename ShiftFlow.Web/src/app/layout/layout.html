@@ -1,10 +1,19 @@
 <aside class="sidebar">
+  <div class="brand">ShiftFlow</div>
+
   <nav>
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
     <a routerLink="/employees" routerLinkActive="active">Employees</a>
     <a routerLink="/schedule" routerLinkActive="active">Schedule</a>
   </nav>
-  <button type="button" (click)="logout()">Log out</button>
+
+  <div class="user">
+    <div class="user-info">
+      <span class="user-name">{{ auth.user()?.username }}</span>
+      <span class="user-role">{{ auth.user()?.role }}</span>
+    </div>
+    <button type="button" (click)="logout()">Log out</button>
+  </div>
 </aside>
 
 <main class="content">
