@@ -1,0 +1,22 @@
+:host { display: flex; min-height: 100vh; }
+
+.sidebar { 
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    width: 14rem;  
+    height: 100vh;
+    background-color: beige;
+}
+
+.content { 
+    flex: 1; 
+    padding: 1.5rem; 
+}
+
+nav {
+    display: flex;
+    // justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}

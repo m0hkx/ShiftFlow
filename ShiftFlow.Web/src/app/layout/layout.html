@@ -1,0 +1,12 @@
+<aside class="sidebar">
+  <nav>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+    <a routerLink="/employees" routerLinkActive="active">Employees</a>
+    <a routerLink="/schedule" routerLinkActive="active">Schedule</a>
+  </nav>
+  <button type="button" (click)="logout()">Log out</button>
+</aside>
+
+<main class="content">
+  <router-outlet />
+</main>
