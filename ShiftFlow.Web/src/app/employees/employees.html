@@ -1,11 +1,17 @@
 <header>
-  <span>Employees</span>
+  <h1>Employees</h1>
 </header>
 
-<ul>
+@if (loading()) {
+  <p>Loading...</p>
+} @else if (error()) {
+  <p role="alert">{{ error() }}</p>
+} @else {
+  <ul>
     @for (employee of employees(); track employee.id) {
-        <li>{{ employee.name }} - {{ employee.position }}</li>
+      <li>{{ employee.name }} - {{ employee.position }}</li>
     } @empty {
-        <li>No employees yet.</li>
+      <li>No employees yet.</li>
     }
-</ul>
+  </ul>
+}
