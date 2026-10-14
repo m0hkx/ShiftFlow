@@ -1,0 +1,48 @@
+<h1>Add employee</h1>
+
+<form class="employee-form" [formGroup]="form" (ngSubmit)="submit()">
+  <label>
+    Name
+    <input type="text" formControlName="name" />
+  </label>
+  @if (form.controls.name.touched && form.controls.name.invalid) {
+    <p class="field-error">Name is required (max 100 characters).</p>
+  }
+
+  <label>
+    Email
+    <input type="email" formControlName="email" />
+  </label>
+  @if (form.controls.email.touched && form.controls.email.invalid) {
+    <p class="field-error">Enter a valid email.</p>
+  }
+
+  <label>
+    Position
+    <input type="text" formControlName="position" />
+  </label>
+  @if (form.controls.position.touched && form.controls.position.invalid) {
+    <p class="field-error">Position is required.</p>
+  }
+
+  <label>
+    Team (optional)
+    <input type="text" formControlName="team" />
+  </label>
+
+  <label class="checkbox">
+    <input type="checkbox" formControlName="active" />
+    Active
+  </label>
+
+  @if (error()) {
+    <p class="field-error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="actions">
+    <a routerLink="/employees">Cancel</a>
+    <button type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Saving...' : 'Save' }}
+    </button>
+  </div>
+</form>

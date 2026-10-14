@@ -1,16 +1,19 @@
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
+import { Auth } from '../auth/auth';
 import { EmployeeService } from './employee';
 import type { Employee } from './employee.models';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   selector: 'app-employees',
   styleUrl: './employees.scss',
   templateUrl: './employees.html',
 })
 export class Employees {
   private employeeService = inject(EmployeeService);
+  protected readonly auth = inject(Auth);
 
   protected readonly employees = signal<Employee[]>([]);
   protected readonly loading = signal(true);

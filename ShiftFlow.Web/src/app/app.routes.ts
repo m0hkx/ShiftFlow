@@ -5,6 +5,7 @@ import { Home } from './home/home';
 import { Login } from './login/login';
 import { Layout } from './layout/layout';
 import { Employees } from './employees/employees';
+import { EmployeeForm } from './employees/employee-form/employee-form';
 import { Schedule } from './schedule/schedule';
 
 export const routes: Routes = [
@@ -15,6 +16,7 @@ export const routes: Routes = [
     children: [
     { path: '', component: Home, canActivate: [authGuard] },
     { path: "employees", component: Employees, canActivate: [authGuard] },
+    { path: "employees/new", component: EmployeeForm, canActivate: [authGuard] },
     { path: "schedule", component: Schedule, canActivate: [authGuard] },
   ]},
   { path: '**', redirectTo: '' },

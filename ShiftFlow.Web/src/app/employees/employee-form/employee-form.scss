@@ -1,0 +1,42 @@
+.employee-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 26rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  input[type="text"],
+  input[type="email"] {
+    padding: 0.5rem;
+    font: inherit;
+  }
+
+  .field-error {
+    margin: 0;
+    color: #b00020;
+    font-size: 0.875rem;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+
+    button {
+      padding: 0.5rem 1rem;
+      font: inherit;
+    }
+  }
+}

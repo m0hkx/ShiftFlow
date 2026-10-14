@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 
-import type { Employee } from './employee.models';
+import type { CreateEmployee, Employee } from './employee.models';
 
 @Service()
 export class EmployeeService {
@@ -9,5 +9,9 @@ export class EmployeeService {
 
   getAll() {
     return this.http.get<Employee[]>('/api/employees');
+  }
+
+  create(employee: CreateEmployee) {
+    return this.http.post<Employee>('/api/employees', employee);
   }
 }
