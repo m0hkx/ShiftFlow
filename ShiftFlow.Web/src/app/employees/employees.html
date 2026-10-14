@@ -1,1 +1,11 @@
-<p>employees works!</p>
+<header>
+  <span>Employees</span>
+</header>
+
+<ul>
+    @for (employee of employees(); track employee.id) {
+        <li>{{ employee.name }} - {{ employee.position }}</li>
+    } @empty {
+        <li>No employees yet.</li>
+    }
+</ul>
