@@ -1,7 +1,7 @@
 <header class="page-header">
   <h1>Employees</h1>
   @if (auth.user()?.role === 'Manager') {
-    <a routerLink="/employees/new">Add employee</a>
+    <a class="add-emp-button" routerLink="/employees/new">Add Employee</a>
   }
 </header>
 
